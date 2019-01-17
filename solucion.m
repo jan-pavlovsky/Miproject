@@ -5,12 +5,12 @@ for filename = files
     filenames = [filenames, filename.name];
 end
 
-filenames = "2000.csv";
+filenames = "2001.csv";
 
 ds = datastore(filenames,  'TreatAsMissing', 'NA');
 
 ds.SelectedFormats{strcmp(ds.SelectedVariableNames, 'UniqueCarrier')} = '%s';
-ds.SelectedFormats{strcmp(ds.SelectedVariableNames, 'TailNum')} = '%s';
+%ds.SelectedFormats{strcmp(ds.SelectedVariableNames, 'TailNum')} = '%s';
 ds.SelectedFormats{strcmp(ds.SelectedVariableNames, 'Origin')} = '%s';
 ds.SelectedFormats{strcmp(ds.SelectedVariableNames, 'Dest')} = '%s';
 ds.SelectedFormats{strcmp(ds.SelectedVariableNames, 'CancellationCode')} = '%s';
@@ -20,7 +20,12 @@ ds.SelectedFormats{strcmp(ds.SelectedVariableNames, 'CancellationCode')} = '%s';
 
 res = mapreduce(ds, @plotMapper, @plotReducer);
 
-arr = zeros(366*20);
+table = readall(res);
+table = sortrows(table);
+table.Key = datetime(table.Key, 'InputFormat', 'yyyyMMdd');
+table.Value = cell2mat(table.Value);
+
+plot(table.Key, table.Value);
 
 function plotMapper (data, info, intermKVStore)
     dts = datetime(data.Year, data.Month, data.DayofMonth);
@@ -29,9 +34,6 @@ function plotMapper (data, info, intermKVStore)
     
     keys = categories(dayStringsCat);
     counts = num2cell(countcats(dayStringsCat));
-    
-    %dayOfYear = day(dt, 'dayofyear');
-    %totalDay = dayOfYear + (data.Year - 1987 * 365);
     
     addmulti(intermKVStore, keys, counts);
 end
