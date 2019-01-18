@@ -1,4 +1,6 @@
-close all;clear all;clc;
+close all;
+clear all;
+clc;
 
 files = dir('./*.csv');
 filenames = {};
@@ -19,32 +21,17 @@ ds.SelectedFormats{strcmp(ds.SelectedVariableNames, 'CancellationCode')} = '%s';
 %ds.SelectedVariableNames = {'CancellationCode', 'Cancelled', 'Origin'};
 
 
-
-res = mapreduce(ds, @plotMapper, @plotReducer);
-
-table = readall(res);
-table = sortrows(table);
-table.Key = datetime(table.Key, 'InputFormat', 'yyyyMMdd');
-table.Value = cell2mat(table.Value);
-
-plot(table.Key, table.Value);
-
-function plotMapper (data, info, intermKVStore)
-    dts = datetime(data.Year, data.Month, data.DayofMonth);
-    dayStrings = yyyymmdd(dts);
-    dayStringsCat = categorical(dayStrings);
-    
-    keys = categories(dayStringsCat);
-    counts = num2cell(countcats(dayStringsCat));
-    
-    addmulti(intermKVStore, keys, counts);
-end
-
-function plotReducer (intermKey, intermValIter, outKVStore)
-    numberOfFlights = 0;
-    while hasnext(intermValIter)
-        nextCount = getnext(intermValIter);
-        numberOfFlights = numberOfFlights + nextCount;
-    end
-    add(outKVStore, intermKey, numberOfFlights);
-end
+countsByDay = tarea1numeros(ds);
+figure;
+plot(countsByDay.Key, countsByDay.Value);
+legend({'Total count of flights by day'},'Location','northwest')
+%{
+[cancelledStats, divertedStats] = tarea1parametros(ds);
+figure;
+plot(cancelledStats.Key, cancelledStats.Value, divertedStats.Key, divertedStats.Value);
+legend({'cancelled flights by day','diverted flights by day'},'Location','northwest')
+%}
+[averageDepDelays, averageArrDelays] = tarea1retrasos(ds, countsByDay);
+figure;
+plot(averageDepDelays.Key, averageDepDelays.Value, averageArrDelays.Key, averageArrDelays.Value);
+legend({'Average daily departure delay','Average daily arrival delay'},'Location','northwest')

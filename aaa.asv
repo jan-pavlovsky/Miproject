@@ -1,0 +1,20 @@
+filenames = "2001m.csv";
+
+ds = datastore(filenames,  'TreatAsMissing', 'NA');
+
+data = read(ds);
+
+data.uniqueDayString = yyyymmdd(datetime(data.Year, data.Month, data.DayofMonth));
+
+cats = unique(data.uniqueDayString);
+daySums = table(cats);
+daySums.sums = zeros(height(daySums), 1);
+
+dict = containers.Map(cats, zeros(length(cats), 1));
+data.SelectedVariableNames = {'uniqueDayString', '};
+
+func = @(key,value) dict(key) = dict(key) + value;
+
+rowfun(func, 
+
+a = M(20010102);
