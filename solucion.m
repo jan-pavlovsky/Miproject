@@ -9,6 +9,8 @@ for filename = files
     filenames = [filenames, filename.name];
 end
 
+filenames = "2001m.csv";
+
 ds = datastore(filenames,  'TreatAsMissing', 'NA');
 
 ds.SelectedFormats{strcmp(ds.SelectedVariableNames, 'UniqueCarrier')} = '%s';
