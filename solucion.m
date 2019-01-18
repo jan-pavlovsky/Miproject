@@ -1,3 +1,5 @@
+close all;clear all;clc;
+
 files = dir('./*.csv');
 filenames = {};
 
@@ -5,7 +7,7 @@ for filename = files
     filenames = [filenames, filename.name];
 end
 
-filenames = "2001.csv";
+filenames = "2001m.csv";
 
 ds = datastore(filenames,  'TreatAsMissing', 'NA');
 
