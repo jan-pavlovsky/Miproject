@@ -9,8 +9,6 @@ for filename = files
     filenames = [filenames, filename.name];
 end
 
-filenames = "2001m.csv";
-
 ds = datastore(filenames,  'TreatAsMissing', 'NA');
 
 ds.SelectedFormats{strcmp(ds.SelectedVariableNames, 'UniqueCarrier')} = '%s';
@@ -25,13 +23,13 @@ countsByDay = tarea1numeros(ds);
 figure;
 plot(countsByDay.Key, countsByDay.Value);
 legend({'Total count of flights by day'},'Location','northwest')
-%{
+
 [cancelledStats, divertedStats] = tarea1parametros(ds);
 figure;
 plot(cancelledStats.Key, cancelledStats.Value, divertedStats.Key, divertedStats.Value);
 legend({'cancelled flights by day','diverted flights by day'},'Location','northwest')
-%}
+
 [averageDepDelays, averageArrDelays] = tarea1retrasos(ds, countsByDay);
 figure;
-plot(averageDepDelays.Key, averageDepDelays.Value, averageArrDelays.Key, averageArrDelays.Value);
+plot(averageDepDelays.Key, averageDepDelays.avg, averageArrDelays.Key, averageArrDelays.avg);
 legend({'Average daily departure delay','Average daily arrival delay'},'Location','northwest')
