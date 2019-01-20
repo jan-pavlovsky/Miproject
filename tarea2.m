@@ -15,44 +15,59 @@ function [totals, destinations, origins] = tarea2(datastore)
     
     airCodeDict = containers.Map(codes, names);
     
-    res = mapreduce(ds, @mapperClimatologicalReasons, @reducerClimatologicalReasons);
+    res = mapreduce(ds, @mapperTotals, @reducerCounter);
+    totalFlights = readall(res);
+    
+    flightCountDict = containers.Map(totalFlights.Key, totalFlights.Value);
+    
+    res = mapreduce(ds, @mapperClimatologicalReasons, @reducerCounter);
     table = readall(res);
+    
+    table.percentage = zeros(height(table), 1);
+    for i=1:height(table)
+        table.percentage(i) = cell2mat(table{i,2}) / flightCountDict(char(table{i,1}));
+    end
     
     totals = table(strcmp(extractAfter(table.Key, 3), ''),:);
     destinations = table(strcmp(extractAfter(table.Key, 3), '-destination'),:);
-    origins = table(strcmp(extractAfter(table.Key, 3), '-destination'),:);
+    origins = table(strcmp(extractAfter(table.Key, 3), '-origin'),:);
     
     totals.Key = extractBefore(totals.Key,4);
     destinations.Key = extractBefore(destinations.Key,4);
     origins.Key = extractBefore(origins.Key,4);
-    
-    totals = sortrows(totals, 2, 'descent');
-    destinations = sortrows(destinations, 2, 'descent');
-    origins = sortrows(origins, 2, 'descent');
     
     totals.airport = cell(height(totals), 1);
     destinations.airport = cell(height(destinations), 1);
     origins.airport = cell(height(origins), 1);
     
     for i=1:height(totals)
-        totals.airport(i) = cellstr(airCodeDict(char(totals{i,1})));
-        origins.airport(i) = cellstr(airCodeDict(char(origins{i,1})));
-        destinations.airport(i) = cellstr(airCodeDict(char(destinations{i,1})));
+        if isKey(airCodeDict,char(totals{i,1}))
+            totals.airport(i) = cellstr(airCodeDict(char(totals{i,1})));
+        end
+        if isKey(airCodeDict,char(origins{i,1}))
+            origins.airport(i) = cellstr(airCodeDict(char(origins{i,1})));
+        end
+        if isKey(airCodeDict,char(destinations{i,1}))
+            destinations.airport(i) = cellstr(airCodeDict(char(destinations{i,1})));
+        end
     end
+end
+
+function mapperTotals (data, ~, intermKVStore)
+    addmulti(intermKVStore, data.Origin, num2cell(zeros(height(data), 1)));
+    addmulti(intermKVStore, data.Dest, num2cell(ones(height(data), 1)));
 end
 
 function mapperClimatologicalReasons (data, ~, intermKVStore)
     data = data(~isnan(data.Cancelled),:);
     data = data(data.Cancelled == 1,:);
-    %data = data(data.CancellationCode == 'B',:);
+    data = data(strcmp(data.CancellationCode, 'B'),:);
 
     addmulti(intermKVStore, data.Origin, num2cell(zeros(height(data), 1)));
     addmulti(intermKVStore, data.Dest, num2cell(ones(height(data), 1)));
 end
 
-
-
-function reducerClimatologicalReasons (intermKey, intermValIter, outKVStore)
+function reducerCounter (intermKey, intermValIter, outKVStore)
     originCancellations = 0;
     destinationCancellations = 0;
     total = 0;
